@@ -88,7 +88,7 @@ CREATE TABLE stocks (
 
 CREATE TABLE stock_transactions (
   id SERIAL PRIMARY KEY,
-  stock_id INTEGER REFERENCES stocks NOT NULL,
+  stock INTEGER REFERENCES stocks NOT NULL,
   price DECIMAL NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_deleted TIMESTAMPTZ DEFAULT NULL
@@ -96,17 +96,17 @@ CREATE TABLE stock_transactions (
 
 CREATE TABLE watchlist_stocks (
   id SERIAL PRIMARY KEY,
-  watchlist_id BIGINT REFERENCES watchlists NOT NULL,
-  stock_id INTEGER REFERENCES stocks NOT NULL,
+  watchlist BIGINT REFERENCES watchlists NOT NULL,
+  stock INTEGER REFERENCES stocks NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_deleted TIMESTAMPTZ DEFAULT NULL,
-  UNIQUE (watchlist_id, stock_id)
+  UNIQUE (watchlist, stock)
 );
 
 CREATE TABLE portfolio_stocks (
   id SERIAL PRIMARY KEY,
-  portfolio_id BIGINT REFERENCES portfolios NOT NULL,
-  stock_id INTEGER REFERENCES stocks,
+  portfolio BIGINT REFERENCES portfolios NOT NULL,
+  stock INTEGER REFERENCES stocks,
   shares INTEGER NOT NULL,
   action trade_action NOT NULL,
   price DECIMAL NOT NULL,
