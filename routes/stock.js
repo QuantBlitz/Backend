@@ -1,9 +1,14 @@
 const express = require('express')
 const bhttp = require('bhttp')
 const Promise = require('bluebird')
+const stock = require('../controllers/stock')
 const router = express.Router()
 
+const { combineStocks } = require('../utils/utils')
+
 module.exports = (knex) => {
+  const handler = stock(knex)
+
   router.get('/input/:input', (req, res) => {
     const baseURL = 'http://dev.markitondemand.com/MODApis/Api/v2/Lookup'
     const endPoint = `${baseURL}/json?input=${req.params.input}`
@@ -39,11 +44,7 @@ module.exports = (knex) => {
     if (req.session.userID) {
       const { userID } = req.session
       Promise.try(() => {
-        return knex('watchlist_stocks')
-          .where({
-            user_id: userID,
-            date_deleted: null
-          })
+        return handler.getWatchlist(userID)
       }).then(data => {
         res.status(200).send(data)
       })
@@ -56,14 +57,12 @@ module.exports = (knex) => {
     if (req.session.userID) {
       const { userID } = req.session
       Promise.try(() => {
-        return knex('portfolio_stocks')
-          .where({
-            user_id: userID,
-            date_deleted: null
-          })
-          .andWhere('shares', '>', '0')
+        return handler.getPortfolio(userID)
       }).then(data => {
-        res.status(200).send(data)
+        res.status(200).send({
+          portfolio: combineStocks(data),
+          trades: data
+        })
       })
     } else {
       res.status(401).send('Not Authorized')
@@ -72,22 +71,31 @@ module.exports = (knex) => {
 
   router.post('/watch', (req, res) => {
     if (req.session.userID) {
-      const { symbol } = req.body
+      const { company, symbol } = req.body
       const { userID } = req.session
       Promise.try(() => {
-        return knex('watchlist_stocks')
-          .insert({
-            symbol,
-            user_id: userID,
-          })
+        return knex('stocks')
+          .where({ company, symbol })
       }).then(data => {
-        return knex('watchlist_stocks')
-          .where({
-            user_id: userID,
-            date_deleted: null
+        if (data.length > 0) {
+          const { id } = data[0]
+          return Promise.try(() => {
+            return handler.watchStock(userID, id)
+          }).then(data => {
+            res.status(200).send(data)
           })
-      }).then(data => {
-        res.status(200).send(data)
+        } else {
+          return Promise.try(() => {
+            return knex('stocks')
+              .returning(['id'])
+              .insert({ company, symbol })
+          }).then(data => {
+            const { id } = data[0]
+            return handler.watchStock(userID, id)
+          }).then(data => {
+            res.status(200).send(data)
+          })
+        }
       })
     } else {
       res.status(401).send('Not Authorized')
@@ -98,96 +106,78 @@ module.exports = (knex) => {
     if (req.session.userID) {
       console.log('Buying Symbol...')
       console.log(req.body)
-      const { name, shares, symbol, price } = req.body
+      const { company, symbol } = req.body
       const { userID } = req.session
       Promise.try(() => {
-        return knex('portfolios')
-          .where({
-            user_id: userID,
-            date_deleted: null
-          })
+        return knex('stocks')
+          .where({ company, symbol })
       }).then(data => {
-        const { funds } = data[0]
-        return Promise.all([
-          knex('portfolios')
-            .where({ user_id: userID })
-            .update({ funds: funds - (+shares * +price) }),
-          knex('portfolio_stocks')
-            .insert({
-              symbol, shares, price,
-              user_id: userID,
-              company_name: name,
-              action: 'BUY'
-            }),
-          knex('portfolio_stocks')
-            .where({
-              user_id: userID,
-              date_deleted: null
+        if (data.length > 0) {
+          const { id } = data[0]
+          return Promise.try(() => {
+            return handler.buyStock(userID, id, req.body)
+          }).then(data => {
+            res.status(200).send({
+              portfolio: combineStocks(data),
+              trades: data
             })
-        ])
-      }).then(data => {
-        const portfolioStocks = data[2]
-        res.status(200).send(portfolioStocks)
+          })
+        } else {
+          return Promise.try(() => {
+            return knex('stocks')
+              .returning(['id'])
+              .insert({ company, symbol })
+          }).then(data => {
+            const { id } = data[0]
+            return handler.buyStock(userID, id, req.body)
+          }).then(data => {
+            res.status(200).send({
+              portfolio: combineStocks(data),
+              trades: data
+            })
+          })
+        }
       })
     } else {
       res.status(401).send('Not Authorized')
     }
   })
-
+  // Allow premium members to leverage their capital up to x amount
   router.post('/sell', (req, res) => {
     if (req.session.userID) {
       console.log('Selling Symbol...')
       console.log(req.body)
-      const { name, shares, symbol, price } = req.body
+      const { company, symbol } = req.body
       const { userID } = req.session
       Promise.try(() => {
-        return Promise.all([
-          knex('portfolios')
-            .where({
-              user_id: userID,
-              date_deleted: null
-            }),
-          knex('portfolio_stocks')
-            .where({
-              symbol,
-              user_id: userID,
-              action: 'BUY',
-              date_deleted: null
-            })
-        ])
+        return knex('stocks')
+          .where({ company, symbol })
       }).then(data => {
-        const { funds } = data[0][0]
-        const portfolioShares = data[1][0].shares
-        const remainingShares = portfolioShares - shares
-        return Promise.all([
-          knex('portfolio_stocks')
-            .where({
-              symbol,
-              user_id: userID,
-              action: 'BUY'
+        if (data.length > 0) {
+          const { id } = data[0]
+          return Promise.try(() => {
+            return handler.sellStock(userID, id, req.body)
+          }).then(data => {
+            res.status(200).send({
+              portfolio: combineStocks(data),
+              trades: data
             })
-            .update({
-              shares: +remainingShares > 0 ? +remainingShares : 0,
-              date_deleted: +remainingShares > 0 ? null : knex.fn.now()
-            }),
-          knex('portfolios')
-            .where({
-              user_id: userID,
-              date_deleted: null
+          })
+        } else {
+          return Promise.try(() => {
+            return knex('stocks')
+              .returning(['id'])
+              .insert({ company, symbol })
+          }).then(data => {
+            const { id } = data[0]
+            return handler.sellStock(userID, id, req.body)
+          }).then(data => {
+            res.status(200).send({
+              portfolio: combineStocks(data),
+              trades: data
             })
-            .update({
-              funds: +funds + (+shares * +price)
-            }),
-          knex('portfolio_stocks')
-            .where({
-              user_id: userID,
-              date_deleted: null
-            })
-            .andWhere('shares', '>', '0')
-        ])
-      }).then(data => {
-        const portfolioStocks = data[2]
-        res.status(200).send(portfolioStocks)
+          })
+        }
       })
     } else {
       res.status(401).send('Not Authorized')

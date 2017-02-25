@@ -19,8 +19,7 @@ LANGUAGE PLPGSQL;
 
 CREATE TYPE user_role AS ENUM ('ADMIN', 'MOD', 'MEMBER', 'BANNED');
 CREATE TYPE user_status AS ENUM ('NEW', 'ACTIVE', 'DEACTIVATED');
-CREATE TYPE account_membership AS ENUM ('FREE', 'TIER_ONE', 'TIER_TWO');
-CREATE TYPE portfolio_status AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE user_membership AS ENUM ('FREE', 'TIER_ONE', 'TIER_TWO');
 CREATE TYPE trade_action AS ENUM ('BUY', 'SELL');
 
 CREATE TABLE users (
@@ -28,130 +27,93 @@ CREATE TABLE users (
   email VARCHAR(65) NOT NULL,
   username VARCHAR(35) NOT NULL,
   password_hash TEXT NOT NULL,
-  first_name VARCHAR(55),
-  last_name VARCHAR(55),
-  birthday TIMESTAMPTZ DEFAULT NULL,
-  avatar_url TEXT DEFAULT 'https://puu.sh/qlsJY/72d9b9920c.jpg',
-  bio VARCHAR(255),
-  last_login TIMESTAMPTZ DEFAULT now() NOT NULL,
   status user_status DEFAULT 'NEW',
   role user_role DEFAULT 'MEMBER',
+  membership user_membership DEFAULT 'FREE',
   verified BOOLEAN DEFAULT FALSE,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE UNIQUE INDEX unique_username ON users (lower(username));
-CREATE UNIQUE INDEX unique_email ON users (lower(email));
-
-CREATE TABLE account_settings (
-  user_id BIGINT REFERENCES users(id) UNIQUE NOT NULL,
+CREATE TABLE user_settings (
+  user_id BIGINT REFERENCES users UNIQUE NOT NULL,
   notification_alerts BOOLEAN DEFAULT TRUE,
-  membership account_membership DEFAULT 'FREE',
+  date_created TIMESTAMPTZ DEFAULT now(),
+  date_updated TIMESTAMPTZ DEFAULT NULL,
+  date_deleted TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE TABLE user_details (
+  user_id BIGINT REFERENCES users UNIQUE NOT NULL,
+  avatar_url TEXT DEFAULT 'https://puu.sh/u1ct7/bf7536a019.png',
+  bio TEXT,
+  last_login TIMESTAMPTZ DEFAULT NULL,
+  first_name VARCHAR(55),
+  last_name VARCHAR(55),
+  birthday TIMESTAMPTZ DEFAULT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE watchlists (
-  user_id BIGINT REFERENCES users(id) NOT NULL,
-  name VARCHAR(25) DEFAULT 'Watchlist',
-  private BOOLEAN DEFAULT FALSE,
+  id SERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users,
+  name VARCHAR(255) NOT NULL DEFAULT 'Watchlist',
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE portfolios (
-  user_id BIGINT REFERENCES users(id) NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users NOT NULL,
   name VARCHAR(25) DEFAULT 'Portfolio',
-  funds DECIMAL CHECK (funds >= 0) DEFAULT 100000,
+  capital DECIMAL CHECK (capital >= 0) DEFAULT 100000,
   private BOOLEAN DEFAULT TRUE,
-  status portfolio_status DEFAULT 'ACTIVE',
   date_created TIMESTAMPTZ DEFAULT now(),
   date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE TABLE portfolio_history (
-  user_id INTEGER REFERENCES users(id) NOT NULL,
-  funds DECIMAL,
-  date_created TIMESTAMPTZ
-);
-
-CREATE TABLE symbols (
+CREATE TABLE stocks (
   id SERIAL PRIMARY KEY,
+  isin VARCHAR(55) UNIQUE,
+  company VARCHAR(155) UNIQUE NOT NULL,
   symbol VARCHAR(15) UNIQUE NOT NULL,
-  exchange VARCHAR(155) NOT NULL,
-  hashtags JSON,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE TABLE commodities (
+CREATE TABLE stock_transactions (
   id SERIAL PRIMARY KEY,
-  commodity VARCHAR(155) UNIQUE NOT NULL,
-  hashtags JSON,
+  stock_id INTEGER REFERENCES stocks NOT NULL,
+  price DECIMAL NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
-);
-
-CREATE TABLE symbol_comments (
-  id SERIAL PRIMARY KEY,
-  symbol_id INTEGER REFERENCES symbols(id) NOT NULL,
-  user_id BIGINT REFERENCES users(id) NOT NULL,
-  comment TEXT NOT NULL,
-  flagged BOOLEAN DEFAULT FALSE,
-  date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
-);
-
-CREATE TABLE commodity_comments (
-  id SERIAL PRIMARY KEY,
-  symbol_id INTEGER REFERENCES commodities(id) NOT NULL,
-  user_id BIGINT REFERENCES users(id) NOT NULL,
-  comment TEXT NOT NULL,
-  flagged BOOLEAN DEFAULT FALSE,
-  date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE watchlist_stocks (
   id SERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) NOT NULL,
-  symbol VARCHAR(20) NOT NULL,
+  watchlist_id BIGINT REFERENCES watchlists NOT NULL,
+  stock_id INTEGER REFERENCES stocks NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE (watchlist_id, stock_id)
 );
 
 CREATE TABLE portfolio_stocks (
   id SERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) NOT NULL,
-  company_name VARCHAR(255) NOT NULL,
-  symbol VARCHAR(20) NOT NULL,
-  shares INTEGER CHECK (shares >= 0) NOT NULL,
+  portfolio_id BIGINT REFERENCES portfolios NOT NULL,
+  stock_id INTEGER REFERENCES stocks,
+  shares INTEGER NOT NULL,
   action trade_action NOT NULL,
-  price DECIMAL CHECK (price > 0) NOT NULL,
+  price DECIMAL NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
-CREATE TABLE portfolio_commodities (
-  id SERIAL PRIMARY KEY,
-  user_id BIGINT REFERENCES users(id) NOT NULL,
-  commodity VARCHAR(155) NOT NULL,
-  quantity INTEGER CHECK (quantity >= 0) NOT NULL,
-  metric VARCHAR(25) NOT NULL,
-  action trade_action NOT NULL,
-  price DECIMAL CHECK (price > 0) NOT NULL,
-  date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
-);
+CREATE UNIQUE INDEX unique_username ON users (lower(username));
+CREATE UNIQUE INDEX unique_email ON users (lower(email));
+CREATE UNIQUE INDEX unique_symbol ON stocks (lower(symbol));

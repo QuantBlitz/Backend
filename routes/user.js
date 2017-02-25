@@ -1,52 +1,24 @@
 const express = require('express')
 const argon2 = require('argon2')
 const Promise = require('bluebird')
+const user = require('../controllers/user')
 const router = express.Router()
 
 module.exports = (knex) => {
+  const handler = user(knex)
   router.post('/register', (req, res) => {
-    const { username, password, email } = req.body
-
     Promise.try(() => {
-      return argon2.generateSalt(32)
-    }).then(salt => {
-      return argon2.hash(password, salt)
-    }).then(hash => {
-      return knex('users')
-        .returning(['id', 'email'])
-        .insert({
-          email,
-          username,
-          password_hash: hash
-        })
+      return handler.createUser(req.body)
     }).then(data => {
-      const { id } = data[0]
-      return Promise.all([
-        { user_id: id },
-        knex('account_settings').insert({ user_id: id }),
-        knex('portfolios').insert({ user_id: id }),
-        knex('watchlists').insert({ user_id: id })
-      ])
-    }).then(data => {
-      const { user_id } = data[0]
+      const { user_id } = data[0][0]
       req.session.userID = user_id
       res.status(200).send('Account created successfully')
     })
   })
 
   router.post('/login', (req, res) => {
-    const { input, password } = req.body
-
     Promise.try(() => {
-      return knex('users')
-        .where({ email: input, date_deleted: null })
-        .orWhere({ username: input, date_deleted: null })
-    }).then(data => {
-      const { id, username, password_hash } = data[0]
-      return Promise.all([
-        { id, username },
-        argon2.verify(password_hash, password)
-      ])
+      return handler.loginUser(req.body)
     }).spread((user, match) => {
       if (match) {
         req.session.userID = user.id
@@ -65,12 +37,16 @@ module.exports = (knex) => {
       const { userID } = req.session
       Promise.try(() => {
         return Promise.all([
-          knex('account_settings').where({ user_id: userID }),
+          knex('user_details').where({ user_id: userID }),
           knex('portfolios').where({ user_id: userID }),
           knex('watchlists').where({ user_id: userID })
         ])
-      }).spread((settings, portfolios, watchlists) => {
-        res.status(200).send({ settings, portfolios, watchlists })
+      }).spread((user, portfolio, watchlist) => {
+        res.status(200).send({
+          user: user[0],
+          portfolio: portfolio[0],
+          watchlist: watchlist[0]
+        })
       })
     } else {
       res.status(401).send({ message: 'Not Authorized' })
@@ -80,16 +56,6 @@ module.exports = (knex) => {
   router.post('/logout', (req, res) => {
     req.session.destroy()
     res.status(200).send('Logging out...')
-  })
-
-  router.get('/:username', (req, res) => {
-    knex('user_profiles')
-      .where({
-        user_username: req.params.username,
-        date_deleted: null
-      })
-      .then(data => res.send(data[0]))
-      .catch(error => res.send(error))
   })
 
   return router
