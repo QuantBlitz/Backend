@@ -142,7 +142,7 @@ module.exports = (knex) => {
       res.status(401).send('Not Authorized')
     }
   })
-  // Allow premium members to leverage their capital up to x amount
+
   router.post('/sell', (req, res) => {
     if (req.session.userID) {
       console.log('Selling Symbol...')
