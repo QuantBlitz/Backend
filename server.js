@@ -23,8 +23,9 @@ const currency = require('./routes/currency')(knex)
 const stock = require('./routes/stock')(knex)
 const user = require('./routes/user')(knex)
 
+const whiteList = ['http://162.243.58.89', 'http://quantblitz.com']
+
 const corsOptionsDelegate = (req, callback) => {
-  const whiteList = ['http://localhost:3000', 'http://162.243.58.89', 'http://quantblitz.com']
   if (whiteList.indexOf(req.header('Origin')) !== -1) {
     callback(null, { orgin: true }) // Enable requested origin in CORS response
   } else {
@@ -39,7 +40,11 @@ const allowCrossDomain = (req, res, next) => {
   if (env === 'development') {
     res.header('Access-Control-Allow-Origin', 'http://localhost:3000')
   } else {
-    res.header('Access-Control-Allow-Origin', 'http://162.243.58.89')
+    if (whiteList.indexOf(req.headers.origin) > -1) {
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+    }
+    // res.header('Access-Control-Allow-Origin', 'http://162.243.58.89')
+    // res.header('Access-Control-Allow-Origin', 'http://quantblitz.com')
   }
   next()
 }
