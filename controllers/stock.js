@@ -27,11 +27,11 @@ module.exports = (knex) => {
           .select(columnValues)
           .rightJoin(
             'stocks',
-            'watchlist_stocks.stock_id',
+            'watchlist_stocks.stock',
             'stocks.id'
           )
           .where({
-            watchlist_id: id
+            watchlist: id
           })
       })
     },
@@ -42,18 +42,18 @@ module.exports = (knex) => {
       }).then(data => {
         const { id } = data[0]
         return knex('watchlist_stocks')
-          .returning(['watchlist_id'])
+          .returning(['watchlist'])
           .insert({
-            watchlist_id: id,
-            stock_id: stockID
+            watchlist: id,
+            stock: stockID
           })
       }).then(data => {
-        const { watchlist_id } = data[0]
+        const { watchlist } = data[0]
         return knex('watchlist_stocks')
-          .where({ watchlist_id })
+          .where({ watchlist })
           .rightJoin(
             'stocks',
-            'watchlist_stocks.stock_id',
+            'watchlist_stocks.stock',
             'stocks.id'
           )
       })
@@ -66,10 +66,10 @@ module.exports = (knex) => {
         const { id } = data[0]
         return knex('portfolio_stocks')
           .select(portfolioColumnValues)
-          .where({ portfolio_id: id })
+          .where({ portfolio: id })
           .rightJoin(
             'stocks',
-            'portfolio_stocks.stock_id',
+            'portfolio_stocks.stock',
             'stocks.id'
           )
       })
@@ -83,12 +83,12 @@ module.exports = (knex) => {
         const { id, capital } = data[0]
         return Promise.all([
           knex('portfolio_stocks')
-            .returning(['portfolio_id'])
+            .returning(['portfolio'])
             .insert({
               shares,
               price,
-              portfolio_id: id,
-              stock_id: stockID,
+              portfolio: id,
+              stock: stockID,
               action: 'BUY'
             }),
           knex('portfolios')
@@ -96,13 +96,13 @@ module.exports = (knex) => {
             .update({ capital: +capital - (+shares * +price) })
         ])
       }).then(data => {
-        const { portfolio_id } = data[0][0]
+        const { portfolio } = data[0][0]
         return knex('portfolio_stocks')
           .select(portfolioColumnValues)
-          .where({ portfolio_id })
+          .where({ portfolio })
           .rightJoin(
             'stocks',
-            'portfolio_stocks.stock_id',
+            'portfolio_stocks.stock',
             'stocks.id'
           )
       })
@@ -116,10 +116,10 @@ module.exports = (knex) => {
         const { id, capital } = data[0]
         return Promise.all([
           knex('portfolio_stocks')
-            .returning(['portfolio_id'])
+            .returning(['portfolio'])
             .insert({
-              portfolio_id: id,
-              stock_id: stockID,
+              portfolio: id,
+              stock: stockID,
               shares: shares * -1,
               price: price,
               action: 'SELL'
@@ -129,13 +129,13 @@ module.exports = (knex) => {
             .update({ capital: +capital + (+shares * +price) })
         ])
       }).then(data => {
-        const { portfolio_id } = data[0][0]
+        const { portfolio } = data[0][0]
         return knex('portfolio_stocks')
           .select(portfolioColumnValues)
-          .where({ portfolio_id })
+          .where({ portfolio })
           .rightJoin(
             'stocks',
-            'portfolio_stocks.stock_id',
+            'portfolio_stocks.stock',
             'stocks.id'
           )
       })
