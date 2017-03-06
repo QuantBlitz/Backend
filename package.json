@@ -15,7 +15,6 @@
     "bluebird": "^3.4.6",
     "body-parser": "^1.15.2",
     "cookie-parser": "^1.4.3",
-    "cors": "^2.7.1",
     "csurf": "^1.9.0",
     "express": "^4.13.4",
     "express-session": "^1.14.1",
@@ -25,7 +24,8 @@
     "morgan": "^1.8.1",
     "pg": "^6.0.1",
     "redis": "^2.6.2",
-    "ws": "^2.0.3"
+    "ws": "^2.0.3",
+    "yfinance": "0.0.6"
   },
   "devDependencies": {
     "chai": "^3.5.0",

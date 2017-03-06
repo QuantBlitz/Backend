@@ -1,5 +1,6 @@
 const express = require('express')
 const bhttp = require('bhttp')
+const yFinance = require('yfinance')
 const Promise = require('bluebird')
 const stock = require('../controllers/stock')
 const router = express.Router()
@@ -19,6 +20,14 @@ module.exports = (knex) => {
     })
   })
 
+  router.get('/quote/:symbol', (req, res) => {
+    const { symbol } = req.params
+    yFinance.getQuotes(symbol, (error, data) => {
+      if (error) console.log(error)
+      res.send(data)
+    })
+  })
+
   router.get('/search/:symbol', (req, res) => {
     const baseURL = 'http://dev.markitondemand.com/MODApis/Api/v2/Quote'
     const endPoint = `${baseURL}/json?symbol=${req.params.symbol}`
@@ -29,14 +38,12 @@ module.exports = (knex) => {
     })
   })
 
-  router.get('/chart/:symbol', (req, res) => {
+  router.get('/history/:symbol', (req, res) => {
+    const { start, end } = req.query
     const { symbol } = req.params
-    const baseURL = 'http://dev.markitondemand.com/MODApis/Api/v2/InteractiveChart/'
-    const endPoint = `${baseURL}json?parameters={"Normalized":false,"NumberOfDays":365,"DataPeriod":"Day","Elements":[{"Symbol":"${symbol}","Type":"price","Params":["c"]}]}`
-
-    bhttp.get(endPoint, {}, (error, response) => {
+    yFinance.getHistorical(symbol, start, end, (error, data) => {
       if (error) console.log(error)
-      res.send(response.body.toString())
+      res.status(200).send(data)
     })
   })
 

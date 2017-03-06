@@ -39,22 +39,18 @@ CREATE TABLE users (
 CREATE TABLE user_settings (
   user_id BIGINT REFERENCES users UNIQUE NOT NULL,
   notification_alerts BOOLEAN DEFAULT TRUE,
-  date_created TIMESTAMPTZ DEFAULT now(),
   date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE user_details (
   user_id BIGINT REFERENCES users UNIQUE NOT NULL,
-  avatar_url TEXT DEFAULT 'https://puu.sh/u1ct7/bf7536a019.png',
+  avatar_url TEXT,
   bio TEXT,
   last_login TIMESTAMPTZ DEFAULT NULL,
   first_name VARCHAR(55),
   last_name VARCHAR(55),
   birthday TIMESTAMPTZ DEFAULT NULL,
-  date_created TIMESTAMPTZ DEFAULT now(),
   date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE watchlists (
