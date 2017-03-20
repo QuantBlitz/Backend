@@ -18,13 +18,9 @@ PG_HBA="/etc/postgresql/$PG_VERSION/main/pg_hba.conf"
 PG_DIR="/var/lib/postgresql/$PG_VERSION/main"
 
 # Edit postgresql.conf to change listen address to '*'
-# This is important in case you need to access the DB from your host machine
 sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/" "$PG_CONF"
 
-# For some reason I couldn't get this working in a standard way
-# It sets up that the db interaction will be in utf-8
-# and HBA is short for 'host based authentication' so for development purposes
-# every host is allowed to authenticate with the database
+# Sets up that the DB interaction to be in utf-8
 sudo bash -c "
 cat << EOF >> $PG_CONF
 client_encoding = utf8
@@ -37,19 +33,23 @@ EOF
 # Load in the new config
 sudo systemctl restart postgresql
 
-# Some Sane Defaults for development
-APP_DB_NAME=marketdata_dev
-APP_DB_USER=marketdata
+# Defaults for development
+APP_DB_NAME=quantblitz_dev
+APP_DB_USER=quantblitz
+
 # Reproducible but not immediately readable password
 APP_DB_PASS=$(date | shasum -p | awk '{print $1}')
+
 # Create the DB_USER
 sudo -u postgres psql -c "CREATE USER $APP_DB_USER WITH PASSWORD '$APP_DB_PASS';"
+
 # Create the DB
 sudo -u postgres psql -c "CREATE DATABASE $APP_DB_NAME WITH OWNER=$APP_DB_USER LC_COLLATE='en_US.utf8' LC_CTYPE='en_US.utf8' ENCODING='UTF8' TEMPLATE=template0;"
-# Give the user permissions to create new DB's (Might be needed for running tests)
+
+# Give the user permissions to create new DBs
 sudo -u postgres psql -c "ALTER USER $APP_DB_USER CREATEDB;"
 
-# Prepping the db with the schema
+# Prepping the DB with the schema
 DB_SCHEMA=first_md_schema
 sudo -u postgres psql $APP_DB_NAME -f /vagrant/schema/schema.sql
 sudo -u postgres psql $APP_DB_NAME -c "GRANT USAGE ON SCHEMA public TO $APP_DB_USER";
@@ -68,7 +68,7 @@ printf "  DATABASE_URL=postgresql://$APP_DB_USER:$APP_DB_PASS@localhost:15432/$A
 echo "Local command to access the database via psql:"
 echo "  export PGUSER=$APP_DB_USER; export PGPASSWORD=$APP_DB_PASS; psql -h localhost -p 15432 $APP_DB_NAME"
 
-# Create Knex connection config file
+# Create Knex connection config file for Node.js to connect with
 cat << EOF >> config.json
 {
   "knex" : {
