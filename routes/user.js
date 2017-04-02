@@ -6,6 +6,7 @@ const router = express.Router()
 
 module.exports = (knex) => {
   const handler = user(knex)
+
   router.post('/register', (req, res) => {
     Promise.try(() => {
       return handler.createUser(req.body)
@@ -53,9 +54,37 @@ module.exports = (knex) => {
     }
   })
 
+  router.post('/settings', (req, res) => {
+    if (req.session.userID) {
+      const { userID } = req.session
+      Promise.try(() => {
+        return knex('user_settings')
+          .where({ user_id: userID })
+      }).then(data => {
+        console.log(data)
+      })
+    } else {
+      res.status(401).send({ message: 'Not Authorized' })
+    }
+  })
+
+  router.post('/details', (req, res) => {
+    if (req.session.userID) {
+      const { userID } = req.session
+      Promise.try(() => {
+        return knex('user_details')
+          .where({ user_id: userID })
+      }).then(data => {
+        console.log(data)
+      })
+    } else {
+      res.status(401).send({ message: 'Not Authorized' })
+    }
+  })
+
   router.post('/logout', (req, res) => {
     req.session.destroy()
-    res.status(200).send('Logging out...')
+    res.status(200).send({ message: 'Logged Out Successfully' })
   })
 
   return router

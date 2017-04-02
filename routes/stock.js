@@ -1,6 +1,6 @@
 const express = require('express')
 const bhttp = require('bhttp')
-const yFinance = require('yfinance')
+const yFinance = require('../utils/yFinance')
 const Promise = require('bluebird')
 const stock = require('../controllers/stock')
 const router = express.Router()
@@ -22,8 +22,10 @@ module.exports = (knex) => {
 
   router.get('/quote/:symbol', (req, res) => {
     const { symbol } = req.params
-    yFinance.getQuotes(symbol, (error, data) => {
-      if (error) console.log(error)
+
+    return Promise.try(() => {
+      return yFinance.getQuote(symbol)
+    }).then(data => {
       res.send(data)
     })
   })
@@ -41,8 +43,10 @@ module.exports = (knex) => {
   router.get('/history/:symbol', (req, res) => {
     const { start, end } = req.query
     const { symbol } = req.params
-    yFinance.getHistorical(symbol, start, end, (error, data) => {
-      if (error) console.log(error)
+
+    return Promise.try(() => {
+      return yFinance.getHistory(symbol, start, end)
+    }).then(data => {
       res.status(200).send(data)
     })
   })
@@ -111,10 +115,9 @@ module.exports = (knex) => {
 
   router.post('/buy', (req, res) => {
     if (req.session.userID) {
-      console.log('Buying Symbol...')
-      console.log(req.body)
-      const { company, symbol } = req.body
+      const { company, symbol, shares } = req.body
       const { userID } = req.session
+
       Promise.try(() => {
         return knex('stocks')
           .where({ company, symbol })
@@ -122,7 +125,7 @@ module.exports = (knex) => {
         if (data.length > 0) {
           const { id } = data[0]
           return Promise.try(() => {
-            return handler.buyStock(userID, id, req.body)
+            return handler.buyStock(userID, id, { symbol, shares })
           }).then(data => {
             res.status(200).send({
               portfolio: combineStocks(data),
@@ -132,11 +135,11 @@ module.exports = (knex) => {
         } else {
           return Promise.try(() => {
             return knex('stocks')
-              .returning(['id'])
+              .returning(['id', 'symbol'])
               .insert({ company, symbol })
           }).then(data => {
             const { id } = data[0]
-            return handler.buyStock(userID, id, req.body)
+            return handler.buyStock(userID, id, { symbol, shares })
           }).then(data => {
             res.status(200).send({
               portfolio: combineStocks(data),
@@ -152,18 +155,17 @@ module.exports = (knex) => {
 
   router.post('/sell', (req, res) => {
     if (req.session.userID) {
-      console.log('Selling Symbol...')
-      console.log(req.body)
-      const { company, symbol } = req.body
+      const { company, symbol, shares } = req.body
       const { userID } = req.session
+
       Promise.try(() => {
         return knex('stocks')
           .where({ company, symbol })
       }).then(data => {
         if (data.length > 0) {
-          const { id } = data[0]
+          const { id, symbol } = data[0]
           return Promise.try(() => {
-            return handler.sellStock(userID, id, req.body)
+            return handler.sellStock(userID, id, { symbol, shares })
           }).then(data => {
             res.status(200).send({
               portfolio: combineStocks(data),
@@ -173,11 +175,11 @@ module.exports = (knex) => {
         } else {
           return Promise.try(() => {
             return knex('stocks')
-              .returning(['id'])
+              .returning(['id', 'symbol'])
               .insert({ company, symbol })
           }).then(data => {
-            const { id } = data[0]
-            return handler.sellStock(userID, id, req.body)
+            const { id, symbol } = data[0]
+            return handler.sellStock(userID, id, { symbol, shares })
           }).then(data => {
             res.status(200).send({
               portfolio: combineStocks(data),

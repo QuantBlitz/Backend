@@ -2,7 +2,7 @@
 
 ln -s /vagrant/* ~/.
 
-export DEBIAN_FRONTEND=noninteractive
+# export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update
 
@@ -69,7 +69,7 @@ echo "Local command to access the database via psql:"
 echo "  export PGUSER=$APP_DB_USER; export PGPASSWORD=$APP_DB_PASS; psql -h localhost -p 15432 $APP_DB_NAME"
 
 # Create Knex connection config file for Node.js to connect with
-cat < EOF > config.json
+cat << EOF >> config.json
 {
   "knex" : {
     "client": "pg",

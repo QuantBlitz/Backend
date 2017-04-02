@@ -1,4 +1,5 @@
 const Promise = require('bluebird')
+const yFinance = require('../utils/yFinance')
 
 const portfolioColumnValues = [
   'portfolio_stocks.id',
@@ -75,12 +76,19 @@ module.exports = (knex) => {
       })
     },
     buyStock: (userID, stockID, data) => {
-      const { shares, price } = data
+      const { symbol, shares } = data
+
       return Promise.try(() => {
-        return knex('portfolios')
-          .where({ user_id: userID })
+        return Promise.all([
+          knex('portfolios')
+            .where({ user_id: userID }),
+          yFinance.getQuote(symbol)
+        ])
       }).then(data => {
-        const { id, capital } = data[0]
+        const { id, capital } = data[0][0]
+        const { quote } = data[1]
+        const price = +quote.LastTradePriceOnly
+
         return Promise.all([
           knex('portfolio_stocks')
             .returning(['portfolio'])
@@ -93,7 +101,7 @@ module.exports = (knex) => {
             }),
           knex('portfolios')
             .where({ id })
-            .update({ capital: +capital - (+shares * +price) })
+            .update({ capital: +capital - (+shares * price) })
         ])
       }).then(data => {
         const { portfolio } = data[0][0]
@@ -108,25 +116,32 @@ module.exports = (knex) => {
       })
     },
     sellStock: (userID, stockID, data) => {
-      const { shares, price } = data
+      const { symbol, shares } = data
+
       return Promise.try(() => {
-        return knex('portfolios')
-          .where({ user_id: userID })
+        return Promise.all([
+          knex('portfolios')
+            .where({ user_id: userID }),
+          yFinance.getQuote(symbol)
+        ])
       }).then(data => {
-        const { id, capital } = data[0]
+        const { id, capital } = data[0][0]
+        const { quote } = data[1]
+        const price = +quote.LastTradePriceOnly
+
         return Promise.all([
           knex('portfolio_stocks')
             .returning(['portfolio'])
             .insert({
+              price,
               portfolio: id,
               stock: stockID,
               shares: shares * -1,
-              price: price,
               action: 'SELL'
             }),
           knex('portfolios')
             .where({ id })
-            .update({ capital: +capital + (+shares * +price) })
+            .update({ capital: +capital + (+shares * price) })
         ])
       }).then(data => {
         const { portfolio } = data[0][0]
