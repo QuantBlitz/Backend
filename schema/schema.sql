@@ -39,7 +39,7 @@ CREATE TABLE users (
 CREATE TABLE user_settings (
   user_id BIGINT REFERENCES users UNIQUE NOT NULL,
   notification_alerts BOOLEAN DEFAULT TRUE,
-  date_updated TIMESTAMPTZ DEFAULT NULL,
+  date_updated TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE user_details (
@@ -50,7 +50,7 @@ CREATE TABLE user_details (
   first_name VARCHAR(55),
   last_name VARCHAR(55),
   birthday TIMESTAMPTZ DEFAULT NULL,
-  date_updated TIMESTAMPTZ DEFAULT NULL,
+  date_updated TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE watchlists (
