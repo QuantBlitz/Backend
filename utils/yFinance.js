@@ -13,6 +13,16 @@ const getYFinanceData = (query) => {
 }
 
 module.exports = {
+  getSearchTerm: (term) => {
+    const query = 'http://d.yimg.com/aq/autoc?query=' + term +
+      '&region=US&lang=en-US'
+
+    return Promise.try(() => {
+      return bhttp.get(query)
+    }).then(data =>
+      data.body.ResultSet
+    )
+  },
   getQuote: (symbols) => {
     const buffer = Array.isArray(symbols) ? symbols.join(',') : symbols
     const YQL = `SELECT * FROM yahoo.finance.quotes WHERE symbol IN ('${buffer}')`

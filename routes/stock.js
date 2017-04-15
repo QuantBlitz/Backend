@@ -11,32 +11,22 @@ module.exports = (knex) => {
   const handler = stock(knex)
 
   router.get('/input/:input', (req, res) => {
-    const baseURL = 'http://dev.markitondemand.com/MODApis/Api/v2/Lookup'
-    const endPoint = `${baseURL}/json?input=${req.params.input}`
-
-    bhttp.get(endPoint, {}, (error, response) => {
-      if (error) console.log(error)
-      res.send(response.body.toString())
+    Promise.try(() => {
+      return yFinance.getSearchTerm(req.params.input)
+    }).then(data => {
+      res.send(data.Result.filter(
+        s => s.exchDisp == 'NASDAQ' || s.exchDisp == 'NYSE'
+      ))
     })
   })
 
   router.get('/quote/:symbol', (req, res) => {
     const { symbol } = req.params
 
-    return Promise.try(() => {
+    Promise.try(() => {
       return yFinance.getQuote(symbol)
     }).then(data => {
       res.send(data)
-    })
-  })
-
-  router.get('/search/:symbol', (req, res) => {
-    const baseURL = 'http://dev.markitondemand.com/MODApis/Api/v2/Quote'
-    const endPoint = `${baseURL}/json?symbol=${req.params.symbol}`
-
-    bhttp.get(endPoint, {}, (error, response) => {
-      if (error) console.log(error)
-      res.send(response.body.toString())
     })
   })
 
