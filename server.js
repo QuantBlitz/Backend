@@ -64,7 +64,10 @@ app.use('/v1/user', user)
 // Refresh sessions
 app.use('/v1/', (req, res, next) => {
   if (req.session.userID) {
-    res.status(200).send()
+    const { email, username } = req.session
+    res.status(200).send({
+      user: { email, username }
+    })
   } else {
     res.status(401).send()
   }
