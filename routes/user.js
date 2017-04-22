@@ -13,7 +13,7 @@ module.exports = (knex) => {
     }).then(data => {
       const { user_id } = data[0][0]
       req.session.userID = user_id
-      res.status(200).send('Account created successfully')
+      res.status(200).send({ user: req.body })
     })
   })
 
@@ -23,6 +23,8 @@ module.exports = (knex) => {
     }).spread((user, match) => {
       if (match) {
         req.session.userID = user.id
+        req.session.username = user.username
+        req.session.email = user.email
         res.status(200).send(user)
       } else {
         req.session.error = 'Access denied'
@@ -35,7 +37,7 @@ module.exports = (knex) => {
 
   router.get('/dashboard', (req, res) => {
     if (req.session.userID) {
-      const { userID } = req.session
+      const { userID, email, username } = req.session
       Promise.try(() => {
         return Promise.all([
           knex('user_details').where({ user_id: userID }),
@@ -44,7 +46,7 @@ module.exports = (knex) => {
         ])
       }).spread((user, portfolio, watchlist) => {
         res.status(200).send({
-          user: user[0],
+          user: { email, username },
           portfolio: portfolio[0],
           watchlist: watchlist[0]
         })
@@ -54,17 +56,24 @@ module.exports = (knex) => {
     }
   })
 
-  router.post('/settings', (req, res) => {
+  router.post('/update/:item', (req, res) => {
     if (req.session.userID) {
+      const { password, passwordNew } = req.body
       const { userID } = req.session
       Promise.try(() => {
-        return knex('user_settings')
-          .where({ user_id: userID })
+        return knex('users')
+          .where({ id: userID })
       }).then(data => {
-        console.log(data)
+        const { password_hash } = data[0]
+        return argon2.verify(password_hash, password)
+      }).then(match => {
+        if (match) {
+          handler.updatePassword(userID, passwordNew)
+          res.status(200).send({ message: 'Password changed' })
+        } else {
+          res.status(401).send({ message: 'Invalid password' })
+        }
       })
-    } else {
-      res.status(401).send({ message: 'Not Authorized' })
     }
   })
 

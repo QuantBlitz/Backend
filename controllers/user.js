@@ -52,6 +52,30 @@ module.exports = (knex) => {
           argon2.verify(password_hash, password)
         ])
       })
+    },
+    updatePassword: (userID, passwordNew) => {
+      return Promise.try(() => {
+        // 32 byte length salt
+        return argon2.generateSalt(32)
+      }).then(salt => {
+        return argon2.hash(passwordNew, salt)
+      }).then(hash => {
+        return knex('users')
+          .where({ id: userID })
+          .update({ password_hash: hash })
+      })
+    },
+    updateAccountDetails: (prev, data) => {
+      const { email, username } = prev
+      return Promise.try(() => {
+        return knex('users')
+          .returning(['id'])
+          .where({ email, username })
+          .update({
+            email: data.email || email,
+            username: data.username || username
+          })
+      })
     }
   }
 }
