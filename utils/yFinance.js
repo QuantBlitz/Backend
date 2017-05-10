@@ -30,13 +30,32 @@ module.exports = {
 
     return getYFinanceData(query)
   },
-  getHistory: (symbols, start, end) => {
+  getNews: (symbols) => {
+    const buffer = Array.isArray(symbols) ? symbols.join(',') : symbols
+    const query = `http://finance.yahoo.com/rss/headline?s=${buffer}`
+
+    return Promise.try(() => {
+      return bhttp.get(query)
+    }).then(data =>
+      data.body.toString()
+    )
+  },
+  getChartData: (symbols, start, end) => {
     const buffer = Array.isArray(symbols) ? symbols.join(',') : symbols
     const YQL = `SELECT * FROM yahoo.finance.historicaldata WHERE symbol = ` +
       `'${buffer}' AND startDate = '${start}' AND endDate = '${end}'`
     const query = `${baseURL}${YQL}${tailURL}`
 
     return getYFinanceData(query)
+  },
+  getChartSnapshot: (symbol) => {
+    const query = `https://chart.finance.yahoo.com/z?s=${symbol}`
+
+    return Promise.try(() => {
+      return bhttp.get(query)
+    }).then(data =>
+      data.body.toString()
+    )
   },
   getDividendHistory: (symbol, start, end) => {
     const buffer = Array.isArray(symbols) ? symbols.join(',') : symbols
