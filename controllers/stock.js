@@ -73,7 +73,6 @@ module.exports = (knex) => {
           .select(portfolioColumnValues)
           .where({ portfolio: id })
           .orderBy('id', 'desc')
-          .limit(20)
           .rightJoin(
             'stocks',
             'portfolio_stocks.stock',
@@ -115,7 +114,6 @@ module.exports = (knex) => {
           .select(portfolioColumnValues)
           .where({ portfolio })
           .orderBy('id', 'desc')
-          .limit(20)
           .rightJoin(
             'stocks',
             'portfolio_stocks.stock',
@@ -157,7 +155,6 @@ module.exports = (knex) => {
           .select(portfolioColumnValues)
           .where({ portfolio })
           .orderBy('id', 'desc')
-          .limit(20)
           .rightJoin(
             'stocks',
             'portfolio_stocks.stock',
