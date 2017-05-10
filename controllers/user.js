@@ -37,6 +37,7 @@ module.exports = (knex) => {
       const { input, password } = data
       return Promise.try(() => {
         return knex('users')
+          .whereNull('date_deleted')
           .where({
             email: input,
             date_deleted: null

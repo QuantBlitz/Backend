@@ -30,12 +30,22 @@ module.exports = (knex) => {
     })
   })
 
+  router.get('/news/:symbol', (req, res) => {
+    const { symbol } = req.params
+
+    Promise.try(() => {
+      return yFinance.getNews(symbol)
+    }).then(data => {
+      console.log(data)
+    })
+  })
+
   router.get('/history/:symbol', (req, res) => {
     const { start, end } = req.query
     const { symbol } = req.params
 
     return Promise.try(() => {
-      return yFinance.getHistory(symbol, start, end)
+      return yFinance.getChartData(symbol, start, end)
     }).then(data => {
       res.status(200).send(data)
     })

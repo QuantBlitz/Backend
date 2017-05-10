@@ -26,14 +26,16 @@ module.exports = (knex) => {
         ]
         return knex('watchlist_stocks')
           .select(columnValues)
+          .where({
+            watchlist: id
+          })
+          .orderBy('id', 'desc')
+          .limit(20)
           .rightJoin(
             'stocks',
             'watchlist_stocks.stock',
             'stocks.id'
           )
-          .where({
-            watchlist: id
-          })
       })
     },
     watchStock: (userID, stockID) => {
@@ -52,6 +54,8 @@ module.exports = (knex) => {
         const { watchlist } = data[0]
         return knex('watchlist_stocks')
           .where({ watchlist })
+          .orderBy('id', 'desc')
+          .limit(20)
           .rightJoin(
             'stocks',
             'watchlist_stocks.stock',
@@ -68,6 +72,8 @@ module.exports = (knex) => {
         return knex('portfolio_stocks')
           .select(portfolioColumnValues)
           .where({ portfolio: id })
+          .orderBy('id', 'desc')
+          .limit(20)
           .rightJoin(
             'stocks',
             'portfolio_stocks.stock',
@@ -108,6 +114,8 @@ module.exports = (knex) => {
         return knex('portfolio_stocks')
           .select(portfolioColumnValues)
           .where({ portfolio })
+          .orderBy('id', 'desc')
+          .limit(20)
           .rightJoin(
             'stocks',
             'portfolio_stocks.stock',
@@ -148,6 +156,8 @@ module.exports = (knex) => {
         return knex('portfolio_stocks')
           .select(portfolioColumnValues)
           .where({ portfolio })
+          .orderBy('id', 'desc')
+          .limit(20)
           .rightJoin(
             'stocks',
             'portfolio_stocks.stock',
