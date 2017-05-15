@@ -11,9 +11,9 @@ module.exports = (knex) => {
   const handler = stock(knex)
 
   router.get('/input/:input', (req, res) => {
-    Promise.try(() => {
-      return yFinance.getSearchTerm(req.params.input)
-    }).then(data => {
+    Promise.try(() =>
+      yFinance.getSearchTerm(req.params.input)
+    ).then(data => {
       res.send(data.Result.filter(
         s => s.exchDisp == 'NASDAQ' || s.exchDisp == 'NYSE'
       ))
@@ -44,9 +44,9 @@ module.exports = (knex) => {
     const { start, end } = req.query
     const { symbol } = req.params
 
-    return Promise.try(() => {
-      return yFinance.getChartData(symbol, start, end)
-    }).then(data => {
+    return Promise.try(() =>
+      yFinance.getChartData(symbol, start, end)
+    ).then(data => {
       res.status(200).send(data)
     })
   })
@@ -54,9 +54,9 @@ module.exports = (knex) => {
   router.get('/watchlist', (req, res) => {
     if (req.session.userID) {
       const { userID } = req.session
-      Promise.try(() => {
-        return handler.getWatchlist(userID)
-      }).then(data => {
+      Promise.try(() =>
+        handler.getWatchlist(userID)
+      ).then(data => {
         res.status(200).send(data)
       })
     } else {
@@ -67,9 +67,9 @@ module.exports = (knex) => {
   router.get('/portfolio', (req, res) => {
     if (req.session.userID) {
       const { userID } = req.session
-      Promise.try(() => {
-        return handler.getPortfolio(userID)
-      }).then(data => {
+      Promise.try(() =>
+        handler.getPortfolio(userID)
+      ).then(data => {
         res.status(200).send({
           portfolio: combineStocks(data),
           trades: data
@@ -84,10 +84,10 @@ module.exports = (knex) => {
     if (req.session.userID) {
       const { company, symbol } = req.body
       const { userID } = req.session
-      Promise.try(() => {
-        return knex('stocks')
+      Promise.try(() =>
+        knex('stocks')
           .where({ company, symbol })
-      }).then(data => {
+      ).then(data => {
         if (data.length > 0) {
           const { id } = data[0]
           return Promise.try(() => {

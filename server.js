@@ -18,7 +18,10 @@ const { secret } = require('./secret.json')
 
 const staticPath = path.join(__dirname, 'static')
 
+const ws = require('./utils/websockets')(knex)
+
 const stock = require('./routes/stock')(knex)
+const trade = require('./routes/trade')(knex)
 const user = require('./routes/user')(knex)
 
 const whiteList = [
@@ -59,6 +62,7 @@ app.use(express.static(staticPath))
 
 // Loading of routes
 app.use('/v1/stock', stock)
+app.use('/v1/trade', trade)
 app.use('/v1/user', user)
 
 // Refresh sessions
