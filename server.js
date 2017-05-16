@@ -28,6 +28,8 @@ const whiteList = [
   'http://localhost:3000',
   'http://162.243.58.89:8080',
   'http://quantblitz.com:8080',
+  'http://162.243.58.89:4040',
+  'http://quantblitz.com:4040',
   'http://162.243.58.89',
   'http://quantblitz.com'
 ]
