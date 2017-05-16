@@ -3,7 +3,9 @@ const WebSocket = require('ws')
 
 const trade = require('../controllers/trade')
 
-const wss = new WebSocket.Server({ port: 443 })
+const ws_port = process.env.WS_PORT || 4040
+
+const wss = new WebSocket.Server({ port: ws_port })
 
 module.exports = (knex) => {
   const handler = trade(knex)
@@ -32,5 +34,5 @@ module.exports = (knex) => {
     })
   })
 
-  console.log('Websockets server listening on port: 4040')
+  console.log('Websockets server listening on port:', ws_port)
 }
