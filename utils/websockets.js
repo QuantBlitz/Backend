@@ -1,12 +1,12 @@
 const Promise = require('bluebird')
 const WebSocket = require('ws')
 
-const stock = require('../controllers/trade')
+const trade = require('../controllers/trade')
 
-const wss = new WebSocket.Server({ port: 4040 })
+const wss = new WebSocket.Server({ port: 443 })
 
 module.exports = (knex) => {
-  const handler = stock(knex)
+  const handler = trade(knex)
 
   wss.on('connection', (socket) => {
     Promise.try(() =>
@@ -22,10 +22,6 @@ module.exports = (knex) => {
         socket.send(JSON.stringify(data))
       )
     }, 1000)
-
-    socket.on('open', (data) => {
-
-    })
 
     socket.on('message', (data) => {
 
