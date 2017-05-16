@@ -30,6 +30,8 @@ const whiteList = [
   'http://quantblitz.com:8080',
   'http://162.243.58.89:4040',
   'http://quantblitz.com:4040',
+  'ws://162.243.58.89:4040',
+  'ws://www.quantblitz.com:4040',
   'http://162.243.58.89',
   'http://quantblitz.com'
 ]
