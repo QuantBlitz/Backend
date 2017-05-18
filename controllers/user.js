@@ -37,15 +37,13 @@ module.exports = (knex) => {
       const { input, password } = data
       return Promise.try(() => {
         return knex('users')
+          .where(
+            knex.raw('LOWER(email) = ?', input.toLowerCase())
+          )
+          .orWhere(
+            knex.raw('LOWER(username) = ?', input.toLowerCase())
+          )
           .whereNull('date_deleted')
-          .where({
-            email: input,
-            date_deleted: null
-          })
-          .orWhere({
-            username: input,
-            date_deleted: null
-          })
       }).then(data => {
         const { id, username, email, password_hash } = data[0]
         return Promise.all([

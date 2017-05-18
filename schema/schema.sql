@@ -115,7 +115,10 @@ CREATE UNIQUE INDEX unique_email ON users (lower(email));
 CREATE UNIQUE INDEX unique_symbol ON stocks (lower(symbol));
 
 CREATE VIEW latest_trades AS
-  SELECT portfolio_stocks.id, company, symbol, shares, price, action
+  SELECT portfolio_stocks.id, username, symbol, shares, price, action
   FROM portfolio_stocks
   LEFT JOIN stocks ON portfolio_stocks.stock = stocks.id
+  LEFT JOIN portfolios ON portfolio_stocks.portfolio = portfolios.id
+  RIGHT JOIN users ON portfolios.user_id = users.id
+  WHERE portfolio_stocks.id IS NOT NULL
   ORDER BY id DESC LIMIT 10;
