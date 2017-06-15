@@ -52,6 +52,30 @@ module.exports = (knex) => {
         ])
       })
     },
+    usernameExists: (username) => {
+      return Promise.try(() =>
+        knex('users')
+          .where(
+            knex.raw('LOWER(username) = ?', username.toLowerCase())
+          )
+      ).then(data =>
+        data
+      )
+    },
+    getUser: (username) => {
+      return Promise.try(() => {
+        return knex('user_details')
+          .select(['id', 'username'])
+          .where(
+            knex.raw('LOWER(username) = ?', username.toLowerCase())
+          )
+          .rightJoin(
+            'users',
+            'user_details.user_id',
+            'users.id'
+          )
+      }).then(data => data)
+    },
     updatePassword: (userID, passwordNew) => {
       return Promise.try(() => {
         // 32 byte length salt

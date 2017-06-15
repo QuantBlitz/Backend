@@ -56,6 +56,25 @@ module.exports = (knex) => {
     }
   })
 
+  router.get('/exists/:username', (req, res) => {
+    Promise.try(() =>
+      handler.usernameExists(req.params.username)
+    ).then(data =>
+      res.send({
+        exists: data.length >= 1 ? true : false
+      })
+    )
+  })
+
+  router.get('/:username', (req, res) => {
+    const { username } = req.params
+    Promise.try(() =>
+      handler.getUser(username)
+    ).then(data => {
+      console.log(data)
+    })
+  })
+
   router.post('/update/:item', (req, res) => {
     if (req.session.userID) {
       const { password, passwordNew } = req.body
