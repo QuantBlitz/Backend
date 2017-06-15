@@ -11,9 +11,9 @@ const combineStocks = (stocks) => {
       const totalShares = output[position].shares + stock.shares
       const totalOne = output[position].shares * output[position].price
       const totalTwo = stock.shares * stock.price
-      const totalPrice = stock.shares < 0
+      const totalPrice = totalShares < 1 || stock.shares < 1
         ? output[position].price
-        : +((totalOne + totalTwo) / totalShares).toFixed(2)
+        : +((totalOne + totalTwo) / totalShares)
 
       output[position] = Object.assign({}, output[position], {
         shares: totalShares,

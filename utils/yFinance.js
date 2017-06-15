@@ -5,10 +5,10 @@ const baseURL = 'http://query.yahooapis.com/v1/public/yql?q='
 const tailURL = '&format=json&env=store://datatables.org/alltableswithkeys'
 
 const getYFinanceData = (query) => {
-  return Promise.try(() => {
-    return bhttp.get(query)
-  }).then(data =>
-    data.body.query.results
+  return Promise.try(() =>
+    bhttp.get(query)
+  ).then(data =>
+    data.body.query.results || []
   )
 }
 
@@ -17,9 +17,9 @@ module.exports = {
     const query = 'http://d.yimg.com/aq/autoc?query=' + term +
       '&region=US&lang=en-US'
 
-    return Promise.try(() => {
-      return bhttp.get(query)
-    }).then(data =>
+    return Promise.try(() =>
+      bhttp.get(query)
+    ).then(data =>
       data.body.ResultSet
     )
   },
@@ -34,9 +34,9 @@ module.exports = {
     const buffer = Array.isArray(symbols) ? symbols.join(',') : symbols
     const query = `http://finance.yahoo.com/rss/headline?s=${buffer}`
 
-    return Promise.try(() => {
-      return bhttp.get(query)
-    }).then(data =>
+    return Promise.try(() =>
+      bhttp.get(query)
+    ).then(data =>
       data.body.toString()
     )
   },
@@ -51,9 +51,9 @@ module.exports = {
   getChartSnapshot: (symbol) => {
     const query = `https://chart.finance.yahoo.com/z?s=${symbol}`
 
-    return Promise.try(() => {
-      return bhttp.get(query)
-    }).then(data =>
+    return Promise.try(() =>
+      bhttp.get(query)
+    ).then(data =>
       data.body.toString()
     )
   },
