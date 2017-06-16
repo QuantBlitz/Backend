@@ -1,11 +1,12 @@
 const express = require('express')
 const bhttp = require('bhttp')
-const yFinance = require('../utils/yFinance')
 const Promise = require('bluebird')
 const stock = require('../controllers/stock')
+const yFinance = require('../utils/yFinance')
+const alphaVantage = require('../utils/alphaVantage')
 const router = express.Router()
 
-const { combineStocks } = require('../utils/utils')
+const { combineStocks, formatHistory } = require('../utils/utils')
 
 module.exports = (knex) => {
   const handler = stock(knex)
@@ -45,9 +46,11 @@ module.exports = (knex) => {
     const { symbol } = req.params
 
     return Promise.try(() =>
-      yFinance.getChartData(symbol, start, end)
+      alphaVantage.getChartDaily(symbol)
     ).then(data => {
-      res.status(200).send(data)
+      const metadata = data['Time Series (Daily)']
+      const output = formatHistory(metadata)
+      res.status(200).send(output)
     })
   })
 
