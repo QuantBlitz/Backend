@@ -110,6 +110,25 @@ CREATE TABLE portfolio_stocks (
   date_deleted TIMESTAMPTZ DEFAULT NULL
 );
 
+CREATE TABLE comments (
+  id SERIAL PRIMARY KEY,
+  parent INTEGER REFERENCES comments NOT NULL,
+  stock INTEGER REFERENCES stocks NOT NULL,
+  user_id INTEGER REFERENCES users NOT NULL,
+  content TEXT NOT NULL,
+  date_created TIMESTAMPTZ DEFAULT now(),
+  date_deleted TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE TABLE comment_votes (
+  user_id BIGINT REFERENCES users NOT NULL,
+  comment INTEGER REFERENCES comments NOT NULL,
+  value INTEGER NOT NULL DEFAULT 0,
+  date_created TIMESTAMPTZ DEFAULT now(),
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE (user_id, comment, date_deleted)
+);
+
 CREATE UNIQUE INDEX unique_username ON users (lower(username));
 CREATE UNIQUE INDEX unique_email ON users (lower(email));
 CREATE UNIQUE INDEX unique_symbol ON stocks (lower(symbol));
