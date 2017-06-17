@@ -44,7 +44,7 @@ CREATE TABLE user_settings (
 
 CREATE TABLE user_details (
   user_id BIGINT REFERENCES users UNIQUE NOT NULL,
-  avatar_url TEXT,
+  avatar TEXT,
   bio TEXT,
   last_login TIMESTAMPTZ DEFAULT NULL,
   first_name VARCHAR(55),
