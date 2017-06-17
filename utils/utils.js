@@ -28,11 +28,11 @@ const formatHistory = (data) =>
   Object.keys(data).map(x =>
     ({
       date: x,
-      open: data[x]['1. open'],
-      high: data[x]['2. high'],
-      low: data[x]['3. low'],
-      close: data[x]['4. close'],
-      volume: data[x]['5. volume']
+      open: +data[x]['1. open'],
+      high: +data[x]['2. high'],
+      low: +data[x]['3. low'],
+      close: +data[x]['4. close'],
+      volume: +data[x]['5. volume']
     })
 )
 
