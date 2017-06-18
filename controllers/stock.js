@@ -1,13 +1,20 @@
 const Promise = require('bluebird')
 const yFinance = require('../utils/yFinance')
 
-const portfolioColumnValues = [
+const portfolioColumns = [
   'portfolio_stocks.id',
   'company',
   'symbol',
   'shares',
   'price',
   'action'
+]
+
+const watchlistColumns = [
+  'watchlist_stocks.id',
+  'watchlist_stocks.date_deleted',
+  'company',
+  'symbol'
 ]
 
 module.exports = (knex) => {
@@ -18,14 +25,8 @@ module.exports = (knex) => {
           .where({ user_id: userID })
       }).then(data => {
         const { id } = data[0]
-        const columnValues = [
-          'watchlist_stocks.id',
-          'watchlist_stocks.date_deleted',
-          'company',
-          'symbol'
-        ]
         return knex('watchlist_stocks')
-          .select(columnValues)
+          .select(watchlistColumns)
           .where({
             watchlist: id
           })
@@ -70,7 +71,7 @@ module.exports = (knex) => {
       }).then(data => {
         const { id } = data[0]
         return knex('portfolio_stocks')
-          .select(portfolioColumnValues)
+          .select(portfolioColumns)
           .where({ portfolio: id })
           .orderBy('id', 'desc')
           .rightJoin(
@@ -111,7 +112,7 @@ module.exports = (knex) => {
       }).then(data => {
         const { portfolio } = data[0][0]
         return knex('portfolio_stocks')
-          .select(portfolioColumnValues)
+          .select(portfolioColumns)
           .where({ portfolio })
           .orderBy('id', 'desc')
           .rightJoin(
@@ -152,7 +153,7 @@ module.exports = (knex) => {
       }).then(data => {
         const { portfolio } = data[0][0]
         return knex('portfolio_stocks')
-          .select(portfolioColumnValues)
+          .select(portfolioColumns)
           .where({ portfolio })
           .orderBy('id', 'desc')
           .rightJoin(
