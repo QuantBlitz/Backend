@@ -62,20 +62,6 @@ module.exports = (knex) => {
         data
       )
     },
-    getUser: (username) => {
-      return Promise.try(() => {
-        return knex('user_details')
-          .select(['id', 'username'])
-          .where(
-            knex.raw('LOWER(username) = ?', username.toLowerCase())
-          )
-          .rightJoin(
-            'users',
-            'user_details.user_id',
-            'users.id'
-          )
-      }).then(data => data)
-    },
     updatePassword: (userID, passwordNew) => {
       return Promise.try(() => {
         // 32 byte length salt
@@ -93,7 +79,8 @@ module.exports = (knex) => {
       return Promise.try(() => {
         return knex('users')
           .returning(['id'])
-          .where({ email, username })
+          .where({ email })
+          .orWhere({ username })
           .update({
             email: data.email || email,
             username: data.username || username
