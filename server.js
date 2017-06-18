@@ -20,6 +20,7 @@ const staticPath = path.join(__dirname, 'static')
 
 const ws = require('./utils/websockets')(knex)
 
+const profile = require('./routes/profile')(knex)
 const stock = require('./routes/stock')(knex)
 const trade = require('./routes/trade')(knex)
 const user = require('./routes/user')(knex)
@@ -65,6 +66,7 @@ app.use(session({
 app.use(express.static(staticPath))
 
 // Loading of routes
+app.use('/v1/profile', profile)
 app.use('/v1/stock', stock)
 app.use('/v1/trade', trade)
 app.use('/v1/user', user)

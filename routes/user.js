@@ -66,15 +66,6 @@ module.exports = (knex) => {
     )
   })
 
-  router.get('/:username', (req, res) => {
-    const { username } = req.params
-    Promise.try(() =>
-      handler.getUser(username)
-    ).then(data => {
-      console.log(data)
-    })
-  })
-
   router.post('/update/:item', (req, res) => {
     if (req.session.userID) {
       const { password, passwordNew } = req.body
