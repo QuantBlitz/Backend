@@ -85,6 +85,7 @@ app.use('/v1/', (req, res, next) => {
 
 // Server-side rendering for React
 if (env === 'production') {
+  app.use(express.static('static'))
   app.get('*', (req, res) => {
     res.sendFile('index.html', {
       root: staticPath
