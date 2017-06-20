@@ -112,7 +112,7 @@ CREATE TABLE portfolio_stocks (
 
 CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
-  user_id INTEGER REFERENCES users NOT NULL,
+  user_id BIGINT REFERENCES users NOT NULL,
   content TEXT NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_deleted TIMESTAMPTZ DEFAULT NULL
