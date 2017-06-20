@@ -112,12 +112,23 @@ CREATE TABLE portfolio_stocks (
 
 CREATE TABLE comments (
   id SERIAL PRIMARY KEY,
-  parent INTEGER REFERENCES comments NOT NULL,
-  stock INTEGER REFERENCES stocks NOT NULL,
   user_id INTEGER REFERENCES users NOT NULL,
   content TEXT NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_deleted TIMESTAMPTZ DEFAULT NULL
+);
+
+CREATE TABLE parents (
+  id SERIAL PRIMARY KEY,
+  stock INTEGER REFERENCES stocks
+  child INTEGER REFERENCES comments
+);
+
+CREATE TABLE children (
+  id SERIAL PRIMARY KEY,
+  root INTEGER REFERENCES comments,
+  parent INTEGER REFERENCES comments,
+  child INTEGER REFERENCES comments
 );
 
 CREATE TABLE comment_votes (
