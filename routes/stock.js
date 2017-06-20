@@ -1,10 +1,12 @@
 const express = require('express')
 const bhttp = require('bhttp')
 const Promise = require('bluebird')
+
+const router = express.Router()
+
 const stock = require('../controllers/stock')
 const yFinance = require('../utils/yFinance')
 const alphaVantage = require('../utils/alphaVantage')
-const router = express.Router()
 
 const { combineStocks, formatHistory } = require('../utils/utils')
 
@@ -42,7 +44,6 @@ module.exports = (knex) => {
   })
 
   router.get('/history/:symbol', (req, res) => {
-    const { start, end } = req.query
     const { symbol } = req.params
 
     return Promise.try(() =>
