@@ -120,7 +120,7 @@ CREATE TABLE comments (
 
 CREATE TABLE parents (
   id SERIAL PRIMARY KEY,
-  stock INTEGER REFERENCES stocks
+  stock INTEGER REFERENCES stocks,
   child INTEGER REFERENCES comments
 );
 
