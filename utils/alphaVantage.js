@@ -3,7 +3,7 @@ const bhttp = require('bhttp')
 
 const { alpha_vantage } = require('../api_keys.json')
 
-const baseURL = 'http://www.alphavantage.co/query?function='
+const baseURL = 'https://www.alphavantage.co/query?function='
 const tailURL = '&apikey=' + alpha_vantage
 
 const getAVData = (query) => {
