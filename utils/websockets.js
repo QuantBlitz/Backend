@@ -25,10 +25,6 @@ module.exports = (knex) => {
       )
     }, 1000)
 
-    socket.on('message', (data) => {
-
-    })
-
     socket.on('close', (data) => {
       clearInterval(trades)
     })
