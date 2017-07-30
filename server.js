@@ -20,6 +20,7 @@ const staticPath = path.join(__dirname, 'static')
 
 const ws = require('./utils/websockets')(knex)
 
+const comment = require('./routes/comment')(knex)
 const profile = require('./routes/profile')(knex)
 const stock = require('./routes/stock')(knex)
 const trade = require('./routes/trade')(knex)
@@ -63,9 +64,8 @@ app.use(session({
   }
 }))
 
-app.use(express.static(staticPath))
-
 // Loading of routes
+app.use('/v1/comment', comment)
 app.use('/v1/profile', profile)
 app.use('/v1/stock', stock)
 app.use('/v1/trade', trade)
@@ -85,7 +85,7 @@ app.use('/v1/', (req, res, next) => {
 
 // Server-side rendering for React
 if (env === 'production') {
-  app.use(express.static('static'))
+  app.use(express.static(staticPath))
   app.get('*', (req, res) => {
     res.sendFile('index.html', {
       root: staticPath

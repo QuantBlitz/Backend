@@ -1,7 +1,7 @@
 const Promise = require('bluebird')
 
 const tradeColumns = [
-  'portfolio_stocks.id',
+  'stock_transactions.id',
   'username',
   'symbol',
   'shares',
@@ -13,12 +13,12 @@ module.exports = (knex) => {
   return {
     getUserTrades: (username) => {
       return Promise.try(() =>
-        knex('portfolio_stocks')
+        knex('stock_transactions')
           .select(tradeColumns)
           .where({ username })
           .joinRaw(
-           `LEFT JOIN stocks ON portfolio_stocks.stock = stocks.id
-            LEFT JOIN portfolios ON portfolio_stocks.portfolio = portfolios.id
+           `LEFT JOIN stocks ON stock_transactions.stock = stocks.id
+            LEFT JOIN portfolios ON stock_transactions.portfolio = portfolios.id
             RIGHT JOIN users ON portfolios.user_id = users.id`
           )
           .orderBy('id', 'desc')
@@ -26,6 +26,6 @@ module.exports = (knex) => {
       ).then(data =>
         data
       )
-    }    
+    }
   }
 }

@@ -9,6 +9,9 @@ module.exports = (knex) => {
 
   router.get('/:username', (req, res) => {
     const { username } = req.params
+    if (username.length > 35) {
+      res.status(401).send('Invalid username search.')
+    }
     Promise.try(() =>
       handler.getUserTrades(username)
     ).then(data => {

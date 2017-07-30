@@ -1,4 +1,8 @@
+-- http://instagram-engineering.tumblr.com/post/10853187575/sharding-ids-at-instagram
+-- Instagram ID Generator Credit BEGIN
+
 CREATE SEQUENCE id_sequence;
+
 CREATE OR REPLACE FUNCTION id_generator(
   OUT new_id BIGINT
 ) AS $$
@@ -17,9 +21,10 @@ END;
 $$
 LANGUAGE PLPGSQL;
 
+-- Instagram ID Generator Credit END
+
 CREATE TYPE user_role AS ENUM ('ADMIN', 'MOD', 'MEMBER', 'BANNED');
 CREATE TYPE user_status AS ENUM ('NEW', 'ACTIVE', 'DEACTIVATED');
-CREATE TYPE user_membership AS ENUM ('FREE', 'TIER_ONE', 'TIER_TWO');
 CREATE TYPE trade_action AS ENUM ('BUY', 'SELL');
 
 CREATE TABLE users (
@@ -29,28 +34,41 @@ CREATE TABLE users (
   password_hash TEXT NOT NULL,
   status user_status DEFAULT 'NEW',
   role user_role DEFAULT 'MEMBER',
-  membership user_membership DEFAULT 'FREE',
   verified BOOLEAN DEFAULT FALSE,
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE (email, username, date_deleted)
+);
+
+CREATE TABLE user_verifications (
+  id SERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users NOT NULL,
+  token VARCHAR(255) UNIQUE NOT NULL,
+  expiration TIMESTAMPTZ NOT NULL,
+  date_created TIMESTAMPTZ DEFAULT now(),
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(user_id, token, date_deleted)
 );
 
 CREATE TABLE user_settings (
-  user_id BIGINT REFERENCES users UNIQUE NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id BIGINT REFERENCES users NOT NULL,
   notification_alerts BOOLEAN DEFAULT TRUE,
-  date_updated TIMESTAMPTZ DEFAULT NULL
+  date_created TIMESTAMPTZ DEFAULT now(),
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(user_id, date_deleted)
 );
 
 CREATE TABLE user_details (
-  user_id BIGINT REFERENCES users UNIQUE NOT NULL,
+  user_id BIGINT REFERENCES users NOT NULL,
   avatar TEXT,
   bio TEXT,
-  last_login TIMESTAMPTZ DEFAULT NULL,
-  first_name VARCHAR(55),
-  last_name VARCHAR(55),
+  first_name VARCHAR(155),
+  last_name VARCHAR(155),
   birthday TIMESTAMPTZ DEFAULT NULL,
-  date_updated TIMESTAMPTZ DEFAULT NULL
+  date_created TIMESTAMPTZ DEFAULT now(),
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(user_id, date_deleted)
 );
 
 CREATE TABLE watchlists (
@@ -58,7 +76,8 @@ CREATE TABLE watchlists (
   user_id BIGINT REFERENCES users,
   name VARCHAR(255) NOT NULL DEFAULT 'Watchlist',
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_deleted TIMESTAMPTZ DEFAULT NULL
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(user_id, name, date_deleted)
 );
 
 CREATE TABLE portfolios (
@@ -68,26 +87,18 @@ CREATE TABLE portfolios (
   capital DECIMAL CHECK (capital >= 0) DEFAULT 100000,
   private BOOLEAN DEFAULT TRUE,
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(user_id, name, date_deleted)
 );
 
 CREATE TABLE stocks (
   id SERIAL PRIMARY KEY,
   isin VARCHAR(55) UNIQUE,
-  company VARCHAR(155) UNIQUE NOT NULL,
+  company VARCHAR(155) UNIQUE,
   symbol VARCHAR(15) UNIQUE NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
-  date_updated TIMESTAMPTZ DEFAULT NULL,
-  date_deleted TIMESTAMPTZ DEFAULT NULL
-);
-
-CREATE TABLE stock_transactions (
-  id SERIAL PRIMARY KEY,
-  stock INTEGER REFERENCES stocks NOT NULL,
-  price DECIMAL NOT NULL,
-  date_created TIMESTAMPTZ DEFAULT now(),
-  date_deleted TIMESTAMPTZ DEFAULT NULL
+  date_deleted TIMESTAMPTZ DEFAULT NULL,
+  UNIQUE(symbol, date_deleted)
 );
 
 CREATE TABLE watchlist_stocks (
@@ -96,18 +107,17 @@ CREATE TABLE watchlist_stocks (
   stock INTEGER REFERENCES stocks NOT NULL,
   date_created TIMESTAMPTZ DEFAULT now(),
   date_deleted TIMESTAMPTZ DEFAULT NULL,
-  UNIQUE (watchlist, stock)
+  UNIQUE (watchlist, stock, date_deleted)
 );
 
-CREATE TABLE portfolio_stocks (
+CREATE TABLE stock_transactions (
   id SERIAL PRIMARY KEY,
-  portfolio BIGINT REFERENCES portfolios NOT NULL,
-  stock INTEGER REFERENCES stocks,
+  portfolio INTEGER REFERENCES portfolios NOT NULL,
+  stock INTEGER REFERENCES stocks NOT NULL,
   shares INTEGER NOT NULL,
-  action trade_action NOT NULL,
   price DECIMAL NOT NULL,
-  date_created TIMESTAMPTZ DEFAULT now(),
-  date_deleted TIMESTAMPTZ DEFAULT NULL
+  action trade_action NOT NULL,
+  date_created TIMESTAMPTZ DEFAULT now()
 );
 
 CREATE TABLE comments (
@@ -126,7 +136,7 @@ CREATE TABLE parents (
 
 CREATE TABLE children (
   id SERIAL PRIMARY KEY,
-  root INTEGER REFERENCES comments,
+  root INTEGER REFERENCES stocks,
   parent INTEGER REFERENCES comments,
   child INTEGER REFERENCES comments
 );
@@ -145,10 +155,10 @@ CREATE UNIQUE INDEX unique_email ON users (lower(email));
 CREATE UNIQUE INDEX unique_symbol ON stocks (lower(symbol));
 
 CREATE VIEW latest_trades AS
-  SELECT portfolio_stocks.id, username, symbol, shares, price, action
-  FROM portfolio_stocks
-  LEFT JOIN stocks ON portfolio_stocks.stock = stocks.id
-  LEFT JOIN portfolios ON portfolio_stocks.portfolio = portfolios.id
+  SELECT stock_transactions.id, username, symbol, shares, price, action
+  FROM stock_transactions
+  LEFT JOIN stocks ON stock_transactions.stock = stocks.id
+  LEFT JOIN portfolios ON stock_transactions.portfolio = portfolios.id
   RIGHT JOIN users ON portfolios.user_id = users.id
-  WHERE portfolio_stocks.id IS NOT NULL
+  WHERE stock_transactions.id IS NOT NULL
   ORDER BY id DESC LIMIT 10;

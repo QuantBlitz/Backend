@@ -2,7 +2,7 @@ const Promise = require('bluebird')
 const yFinance = require('../utils/yFinance')
 
 const portfolioColumns = [
-  'portfolio_stocks.id',
+  'stock_transactions.id',
   'company',
   'symbol',
   'shares',
@@ -70,13 +70,13 @@ module.exports = (knex) => {
           .where({ user_id: userID })
       }).then(data => {
         const { id } = data[0]
-        return knex('portfolio_stocks')
+        return knex('stock_transactions')
           .select(portfolioColumns)
           .where({ portfolio: id })
           .orderBy('id', 'desc')
           .rightJoin(
             'stocks',
-            'portfolio_stocks.stock',
+            'stock_transactions.stock',
             'stocks.id'
           )
       })
@@ -96,7 +96,7 @@ module.exports = (knex) => {
         const price = +quote.LastTradePriceOnly
 
         return Promise.all([
-          knex('portfolio_stocks')
+          knex('stock_transactions')
             .returning(['portfolio'])
             .insert({
               shares,
@@ -111,13 +111,13 @@ module.exports = (knex) => {
         ])
       }).then(data => {
         const { portfolio } = data[0][0]
-        return knex('portfolio_stocks')
+        return knex('stock_transactions')
           .select(portfolioColumns)
           .where({ portfolio })
           .orderBy('id', 'desc')
           .rightJoin(
             'stocks',
-            'portfolio_stocks.stock',
+            'stock_transactions.stock',
             'stocks.id'
           )
       })
@@ -137,7 +137,7 @@ module.exports = (knex) => {
         const price = +quote.LastTradePriceOnly
 
         return Promise.all([
-          knex('portfolio_stocks')
+          knex('stock_transactions')
             .returning(['portfolio'])
             .insert({
               price,
@@ -152,13 +152,13 @@ module.exports = (knex) => {
         ])
       }).then(data => {
         const { portfolio } = data[0][0]
-        return knex('portfolio_stocks')
+        return knex('stock_transactions')
           .select(portfolioColumns)
           .where({ portfolio })
           .orderBy('id', 'desc')
           .rightJoin(
             'stocks',
-            'portfolio_stocks.stock',
+            'stock_transactions.stock',
             'stocks.id'
           )
       })
